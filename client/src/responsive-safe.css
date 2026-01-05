@@ -1,0 +1,192 @@
+/* 
+ * Estilos Responsivos Seguros para SocorroEdu
+ * Complementa o Tailwind CSS sem interferir com funcionalidades existentes
+ */
+
+/* ========================================
+   MOBILE FIRST APPROACH (xs: 320px)
+   ======================================== */
+
+/* Garantir que o viewport seja correto em mobile */
+@supports (height: 100dvh) {
+  body {
+    height: 100dvh; /* Dynamic viewport height para mobile */
+  }
+}
+
+/* ========================================
+   MOBILE (320px - 639px)
+   ======================================== */
+
+@media (max-width: 639px) {
+  /* Aumentar área de toque dos botões */
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  a[href] {
+    min-height: 44px; /* Recomendação Apple/Google */
+    min-width: 44px;
+  }
+
+  /* Garantir que inputs não causem zoom em iOS */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Remover highlight padrão em iOS */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Melhorar scroll em mobile */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ========================================
+   TABLET (sm: 640px até md: 768px)
+   ======================================== */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* Otimizar layout para tablet */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* ========================================
+   DESKTOP (lg: 1024px e acima)
+   ======================================== */
+
+@media (min-width: 1024px) {
+  /* Sidebar sempre visível em desktop */
+  .sidebar {
+    position: relative;
+  }
+
+  /* Remover overlay em desktop */
+  .sidebar-overlay {
+    display: none;
+  }
+}
+
+/* ========================================
+   LANDSCAPE vs PORTRAIT
+   ======================================== */
+
+@media (orientation: portrait) {
+  /* Otimizações para portrait */
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  /* Reduzir espaçamento em landscape com pouca altura */
+  body {
+    overflow: hidden;
+  }
+}
+
+/* ========================================
+   ACESSIBILIDADE
+   ======================================== */
+
+/* Melhorar contraste em modo de alto contraste */
+@media (prefers-contrast: more) {
+  .chat-message {
+    border: 1px solid currentColor;
+  }
+
+  button {
+    border-width: 2px;
+  }
+}
+
+/* Respeitar preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================
+   DARK MODE
+   ======================================== */
+
+.dark {
+  color-scheme: dark;
+}
+
+/* ========================================
+   FIXES ESPECÍFICOS
+   ======================================== */
+
+/* Corrigir 100vh em mobile (viewport dinâmica) */
+.full-height {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Corrigir overflow em mobile */
+body {
+  overflow: hidden;
+}
+
+/* Remover appearance padrão em inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 4px;
+}
+
+/* ========================================
+   VARIÁVEIS CSS RESPONSIVAS
+   ======================================== */
+
+:root {
+  /* Tamanhos responsivos */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Tamanhos de fonte responsivos */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+
+  /* Breakpoints */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* ========================================
+   OTIMIZAÇÕES DE PERFORMANCE
+   ======================================== */
+
+/* Usar will-change para animações suaves */
+.chat-message {
+  will-change: transform;
+}
+
+/* Otimizar scroll em mobile */
+.chat-area {
+  -webkit-overflow-scrolling: touch;
+}

@@ -18,6 +18,8 @@ import {
   Pencil,
   Calculator,
   Palette,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { geminiClient } from "@/lib/geminiClient";
 import { toast } from "sonner";
@@ -70,8 +72,8 @@ export default function ChatLayout() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string>("Português");
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Padrão: fechado em mobile
-  const [showSubjectSelector, setShowSubjectSelector] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([
     {
       id: "1",
@@ -82,18 +84,36 @@ export default function ChatLayout() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Detectar tamanho da tela e ajustar sidebar
+  // Detectar preferência de dark mode do sistema
+  useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setIsDarkMode(prefersDark);
+    if (prefersDark) {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  // Aplicar dark mode ao documento
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDarkMode]);
+
+  // Fechar sidebar em mobile quando redimensionar
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setSidebarOpen(true); // Desktop: sidebar aberta por padrão
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
       } else {
-        setSidebarOpen(false); // Mobile/Tablet: sidebar fechada por padrão
+        setSidebarOpen(true);
       }
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize(); // Chamar ao montar
+    handleResize();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -157,18 +177,8 @@ export default function ChatLayout() {
     inputRef.current?.focus();
   };
 
-  const handleSelectSubject = (subject: string) => {
-    setSelectedSubject(subject);
-    setShowSubjectSelector(false);
-    handleNewConversation();
-    // Fechar sidebar em mobile após selecionar
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
-  };
-
   return (
-    <div className="flex h-screen bg-white overflow-hidden">
+    <div className={`flex h-screen ${isDarkMode ? "dark" : ""} bg-white dark:bg-gray-900`}>
       {/* Overlay para mobile quando sidebar está aberta */}
       {sidebarOpen && window.innerWidth < 1024 && (
         <div
@@ -179,125 +189,135 @@ export default function ChatLayout() {
 
       {/* Sidebar - Responsivo */}
       <div
-        className={`fixed lg:relative z-40 h-full bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-300 overflow-hidden
-          ${sidebarOpen ? "w-64" : "w-0"}
-          ${window.innerWidth >= 1024 ? "w-64" : ""}
-        `}
+        className={`${
+          sidebarOpen ? "w-64" : "w-0"
+        } fixed lg:relative z-40 lg:z-0 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 overflow-hidden h-screen lg:h-auto`}
       >
         {/* Logo e Header */}
-        <div className="p-3 sm:p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <img
               src="/socorroedu-logo.png"
               alt="SocorroEdu"
-              className="h-8 w-auto max-w-[150px] sm:max-w-[180px]"
+              className="h-12 w-auto"
             />
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 hover:bg-gray-200 rounded"
+              className="lg:hidden p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-gray-900 dark:text-white" />
             </button>
           </div>
           <Button
             onClick={handleNewConversation}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Nova conversa</span>
-            <span className="sm:hidden">Nova</span>
+            Nova conversa
           </Button>
         </div>
 
         {/* Conversas */}
-        <ScrollArea className="flex-1 p-3 sm:p-4">
+        <ScrollArea className="flex-1 p-4">
           <div className="space-y-2">
             {conversations.map((conv) => (
               <div
                 key={conv.id}
-                className="p-2 sm:p-3 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors text-sm"
+                className="p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition-colors"
               >
-                <p className="font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {conv.title}
                 </p>
-                <p className="text-xs text-gray-500">{conv.date}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{conv.date}</p>
               </div>
             ))}
           </div>
         </ScrollArea>
 
         {/* User Profile */}
-        <div className="p-3 sm:p-4 border-t border-gray-200 flex-shrink-0">
-          <div className="flex items-center gap-3 p-2 sm:p-3 rounded-lg hover:bg-gray-200 cursor-pointer">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
               P
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                 Paulo
               </p>
-              <p className="text-xs text-gray-500">Aluno</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Aluno</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col w-full lg:w-auto">
-        {/* Top Bar - Responsivo */}
-        <div className="border-b border-gray-200 bg-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0">
+      <div className="flex-1 flex flex-col w-full">
+        {/* Top Bar */}
+        <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded flex-shrink-0 lg:hidden"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded lg:hidden"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-5 h-5 text-gray-900 dark:text-white" />
               </button>
             )}
-            <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+            <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
               {selectedSubject}
             </h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              title={isDarkMode ? "Modo claro" : "Modo escuro"}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5 text-yellow-500" />
+              ) : (
+                <Moon className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleNewConversation}
-              className="hidden sm:flex text-xs sm:text-sm"
+              className="hidden sm:flex"
             >
               <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">Nova conversa</span>
-              <span className="md:hidden">Nova</span>
+              Nova conversa
             </Button>
           </div>
         </div>
 
-        {/* Messages Area - Responsivo */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white">
-          <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-4xl mx-auto w-full">
-            {messages.length === 0 && !showSubjectSelector ? (
-              <div className="flex flex-col items-center justify-center h-96 text-center">
-                <div className="pt-8 sm:pt-12 md:pt-24">
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-900">
+          <div className="p-4 sm:p-6 max-w-4xl mx-auto w-full">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center min-h-96 text-center">
+                <div className="pt-8 sm:pt-16">
                   <img
                     src="/profsiri-mascote.png"
                     alt="Prof Siri"
-                    className="h-24 sm:h-28 md:h-32 w-auto mx-auto mb-4 sm:mb-6"
+                    className="h-32 sm:h-40 w-auto mx-auto mb-4 sm:mb-6"
                   />
                 </div>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   Bem-vindo ao SocorroEdu! 👋
                 </h2>
-                <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md px-2">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 max-w-md px-2">
                   Eu sou o{" "}
-                  <span className="font-bold text-blue-600">Prof Siri</span>, seu
-                  assistente de estudos! Selecione uma matéria abaixo e me faça
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    Prof Siri
+                  </span>
+                  , seu assistente de estudos! Selecione uma matéria abaixo e me faça
                   qualquer pergunta.
                 </p>
 
                 {/* Sugestões */}
                 <div className="mb-6 sm:mb-8 w-full px-2">
-                  <p className="text-sm sm:text-base text-yellow-500 font-semibold mb-3 sm:mb-4">
+                  <p className="text-sm sm:text-base text-yellow-500 dark:text-yellow-400 font-semibold mb-3 sm:mb-4">
                     ✨ Sugestões para começar:
                   </p>
                   <div className="space-y-2 sm:space-y-3 max-w-2xl mx-auto">
@@ -306,11 +326,11 @@ export default function ChatLayout() {
                         setInput("Me explique o que são frações");
                         inputRef.current?.focus();
                       }}
-                      className="w-full p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-left text-sm sm:text-base"
+                      className="w-full p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors text-left"
                     >
                       <div className="flex items-start gap-2 sm:gap-3">
-                        <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-1" />
-                        <p className="text-gray-700">
+                        <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-1" />
+                        <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
                           Me explique o que são frações
                         </p>
                       </div>
@@ -320,11 +340,11 @@ export default function ChatLayout() {
                         setInput("Quais são os planetas do sistema solar?");
                         inputRef.current?.focus();
                       }}
-                      className="w-full p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-left text-sm sm:text-base"
+                      className="w-full p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors text-left"
                     >
                       <div className="flex items-start gap-2 sm:gap-3">
-                        <BookMarked className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-1" />
-                        <p className="text-gray-700">
+                        <BookMarked className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-1" />
+                        <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
                           Quais são os planetas do sistema solar?
                         </p>
                       </div>
@@ -334,11 +354,11 @@ export default function ChatLayout() {
                         setInput("Me ajude a estudar verbos em inglês");
                         inputRef.current?.focus();
                       }}
-                      className="w-full p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-left text-sm sm:text-base"
+                      className="w-full p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors text-left"
                     >
                       <div className="flex items-start gap-2 sm:gap-3">
-                        <Beaker className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-1" />
-                        <p className="text-gray-700">
+                        <Beaker className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5 sm:mt-1" />
+                        <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
                           Me ajude a estudar verbos em inglês
                         </p>
                       </div>
@@ -346,87 +366,99 @@ export default function ChatLayout() {
                   </div>
                 </div>
               </div>
-            ) : null}
-
-            {/* Seletor de Disciplinas - Responsivo */}
-            {showSubjectSelector && messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center min-h-96 text-center">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
-                  Escolha uma Disciplina
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 w-full max-w-2xl">
-                  {SUBJECTS.map((subject) => {
-                    const IconComponent = subject.icon;
-                    return (
-                      <button
-                        key={subject.id}
-                        onClick={() => handleSelectSubject(subject.name)}
-                        className="p-3 sm:p-4 md:p-6 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-all flex flex-col items-center gap-2 text-xs sm:text-sm md:text-base"
-                      >
-                        <IconComponent className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-600" />
-                        <span className="font-medium text-gray-900">
-                          {subject.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+            ) : (
+              <>
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    } mb-4`}
+                  >
+                    <div
+                      className={`max-w-xs sm:max-w-sm md:max-w-2xl ${
+                        message.role === "user"
+                          ? "bg-blue-600 text-white rounded-2xl rounded-tr-none"
+                          : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl rounded-tl-none"
+                      } px-4 py-3`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                        {message.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start mb-4">
+                    <div className="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl rounded-tl-none px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <p className="text-sm">Pensando...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={scrollRef} />
+              </>
             )}
+          </div>
+        </div>
 
-            {/* Mensagens */}
-            <div className="space-y-3 sm:space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
+        {/* Subjects Tabs - Responsivo */}
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 py-3 sm:py-4 overflow-x-auto flex-shrink-0">
+          <div className="flex gap-2 min-w-max">
+            {SUBJECTS.map((subject) => {
+              const Icon = subject.icon;
+              return (
+                <button
+                  key={subject.id}
+                  onClick={() => {
+                    setSelectedSubject(subject.name);
+                    setMessages([]);
+                    geminiClient.clearHistory();
+                  }}
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg whitespace-nowrap transition-colors text-sm sm:text-base ${
+                    selectedSubject === subject.name
+                      ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
-                  <div
-                    className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-sm sm:text-base ${
-                      message.role === "user"
-                        ? "bg-blue-600 text-white rounded-br-none"
-                        : "bg-gray-100 text-gray-900 rounded-bl-none"
-                    }`}
-                  >
-                    <p className="break-words">{message.content}</p>
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 text-gray-900 px-3 sm:px-4 py-2 sm:py-3 rounded-lg rounded-bl-none flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm sm:text-base">Digitando...</span>
-                  </div>
-                </div>
-              )}
-              <div ref={scrollRef} />
-            </div>
+                  <Icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{subject.name}</span>
+                  <span className="sm:hidden text-xs">{subject.name.slice(0, 3)}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Input Area - Responsivo */}
-        <div className="border-t border-gray-200 bg-white px-3 sm:px-4 md:px-6 py-3 sm:py-4 flex-shrink-0">
-          <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 max-w-4xl mx-auto">
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Digite sua pergunta..."
-              disabled={isLoading}
-              className="flex-1 text-sm sm:text-base"
-            />
-            <Button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex-shrink-0 px-3 sm:px-4"
-              size="sm"
-            >
-              <Send className="w-4 h-4" />
-              <span className="hidden sm:inline ml-2">Enviar</span>
-            </Button>
+        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 flex-shrink-0">
+          <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
+            <div className="flex gap-2 sm:gap-3">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Selecione uma matéria para começar..."
+                disabled={isLoading}
+                className="rounded-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-600 focus:ring-0 px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base"
+              />
+              <Button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white px-4 sm:px-6 py-2 sm:py-3 font-semibold flex-shrink-0"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2 sm:mt-3">
+              O Prof Siri responde apenas conteúdos educacionais alinhados a BNCC
+            </p>
           </form>
         </div>
       </div>
