@@ -1,0 +1,381 @@
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Loader2,
+  Send,
+  Plus,
+  Menu,
+  X,
+  MessageSquare,
+  BookMarked,
+  Beaker,
+  Globe,
+  Landmark,
+  Languages,
+  Pencil,
+  Calculator,
+  Palette,
+} from "lucide-react";
+import { geminiClient } from "@/lib/geminiClient";
+import { toast } from "sonner";
+
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  date: string;
+}
+
+const SUBJECTS = [
+  { id: "portugues", name: "Português", icon: BookMarked },
+  { id: "matematica", name: "Matemática", icon: Calculator },
+  { id: "ciencias", name: "Ciências", icon: Beaker },
+  { id: "historia", name: "História", icon: Landmark },
+  { id: "geografia", name: "Geografia", icon: Globe },
+  { id: "ingles", name: "Inglês", icon: Languages },
+  { id: "artes", name: "Artes", icon: Palette },
+  { id: "redacao", name: "Redação", icon: Pencil },
+];
+
+const SUBJECT_PROMPTS: Record<string, string> = {
+  Português:
+    "Você é um professor de Português especializado em literatura, gramática e interpretação de textos. Explique regras gramaticais com exemplos, analise obras literárias e ajude com redação. Sempre alinhado à BNCC.",
+  Matemática:
+    "Você é um professor de Matemática especializado em ensino para alunos do ensino fundamental e médio. Explique conceitos de forma clara, use exemplos práticos e alinhados à BNCC. Sempre ofereça exercícios para praticar.",
+  Ciências:
+    "Você é um professor de Ciências especializado em biologia, física e química. Explique conceitos científicos de forma clara, use analogias do dia a dia e sempre relacione com aplicações práticas.",
+  História:
+    "Você é um professor de História especializado em história do Brasil e mundial. Explique eventos históricos com contexto, analise causas e consequências, e sempre relacione com o presente.",
+  Geografia:
+    "Você é um professor de Geografia especializado em geografia física e humana. Explique conceitos geográficos, analise mapas e dados, e sempre relacione com a realidade brasileira.",
+  Inglês:
+    "Você é um professor de Inglês. Ajude com gramática, vocabulário, pronúncia e conversação. Sempre ofereça exemplos práticos e exercícios para melhorar o aprendizado.",
+  Artes:
+    "Você é um professor de Artes. Ensine sobre história da arte, técnicas artísticas, movimentos artísticos e ajude a desenvolver criatividade. Sempre relacione com contexto cultural.",
+  Redação:
+    "Você é um professor especializado em redação. Ajude com estrutura de textos, argumentação, coesão e coerência. Ofereça feedback construtivo sobre redações e dicas de melhoria.",
+};
+
+export default function ChatLayout() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<string>("Português");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>([
+    {
+      id: "1",
+      title: "Conversa anterior",
+      date: "Hoje",
+    },
+  ]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Scroll automático
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // Focar no input
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!input.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      const systemPrompt =
+        SUBJECT_PROMPTS[selectedSubject] || SUBJECT_PROMPTS.Português;
+      const response = await geminiClient.sendMessage(
+        input,
+        selectedSubject,
+        systemPrompt
+      );
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: response,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Erro ao enviar mensagem. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleNewConversation = () => {
+    setMessages([]);
+    geminiClient.clearHistory();
+    inputRef.current?.focus();
+  };
+
+  return (
+    <div className="flex h-screen bg-white">
+      {/* Sidebar */}
+      <div
+        className={`${
+          sidebarOpen ? "w-64" : "w-0"
+        } bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-300 overflow-hidden`}
+      >
+        {/* Logo e Header */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <img src="/socorroedu-logo.png" alt="SocorroEdu" className="h-8 w-auto" style={{width: '224px', height: '214px'}} />
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 hover:bg-gray-200 rounded"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <Button
+            onClick={handleNewConversation}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Nova conversa
+          </Button>
+        </div>
+
+        {/* Conversas */}
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-2">
+            {conversations.map((conv) => (
+              <div
+                key={conv.id}
+                className="p-3 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors"
+              >
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {conv.title}
+                </p>
+                <p className="text-xs text-gray-500">{conv.date}</p>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        {/* User Profile */}
+        <div className="p-4 border-t border-gray-200">
+          <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-200 cursor-pointer">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+              P
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                Paulo
+              </p>
+              <p className="text-xs text-gray-500">Aluno</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Bar */}
+        <div className="border-b border-gray-200 bg-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {!sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
+            <h1 className="text-lg font-semibold text-gray-900">
+              {selectedSubject}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNewConversation}
+              className="hidden sm:flex"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova conversa
+            </Button>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+          <div className="p-6 max-w-4xl mx-auto h-full">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-96 text-center">
+                <div className="pt-24" style={{height: '249px'}}>
+                  <img src="/profsiri-mascote.png" alt="Prof Siri" className="h-32 w-auto mb-6" style={{width: '173px', height: '188px'}} />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  Bem-vindo ao SocorroEdu! 👋
+                </h2>
+                <p className="text-gray-600 mb-8 max-w-md">
+                  Eu sou o <span className="font-bold text-blue-600">Prof Siri</span>
+                  , seu assistente de estudos! Selecione uma matéria abaixo e me faça
+                  qualquer pergunta.
+                </p>
+
+                {/* Sugestões */}
+                <div className="mb-8 w-full">
+                  <p className="text-yellow-500 font-semibold mb-4">
+                    ✨ Sugestões para começar:
+                  </p>
+                  <div className="space-y-3 max-w-2xl mx-auto">
+                    <button onClick={() => { setInput('Me explique o que são frações'); inputRef.current?.focus(); }} className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-left">
+                      <div className="flex items-start gap-3">
+                        <MessageSquare className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                        <p className="text-gray-700">
+                          Me explique o que são frações
+                        </p>
+                      </div>
+                    </button>
+                    <button onClick={() => { setInput('Quais são os planetas do sistema solar?'); inputRef.current?.focus(); }} className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-left">
+                      <div className="flex items-start gap-3">
+                        <BookMarked className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                        <p className="text-gray-700">
+                          Quais são os planetas do sistema solar?
+                        </p>
+                      </div>
+                    </button>
+                    <button onClick={() => { setInput('Me ajude a estudar verbos em inglês'); inputRef.current?.focus(); }} className="w-full p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-left">
+                      <div className="flex items-start gap-3">
+                        <Beaker className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                        <p className="text-gray-700">
+                          Me ajude a estudar verbos em inglês
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    } mb-4`}
+                  >
+                    <div
+                      className={`max-w-2xl ${
+                        message.role === "user"
+                          ? "bg-blue-600 text-white rounded-2xl rounded-tr-none"
+                          : "bg-gray-100 text-gray-900 rounded-2xl rounded-tl-none"
+                      } px-4 py-3`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                        {message.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start mb-4">
+                    <div className="bg-gray-100 text-gray-900 rounded-2xl rounded-tl-none px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <p className="text-sm">Pensando...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={scrollRef} />
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Subjects Tabs */}
+        <div className="border-t border-gray-200 bg-white px-6 py-4 overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
+            {SUBJECTS.map((subject) => {
+              const Icon = subject.icon;
+              return (
+                <button
+                  key={subject.id}
+                  onClick={() => {
+                    setSelectedSubject(subject.name);
+                    setMessages([]);
+                    geminiClient.clearHistory();
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                    selectedSubject === subject.name
+                      ? "bg-gray-200 text-gray-900 font-medium"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm">{subject.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Input Area */}
+        <div className="border-t border-gray-200 bg-white p-6">
+          <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto">
+            <div className="flex gap-3">
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Selecione uma matéria para começar..."
+                disabled={isLoading}
+                className="rounded-full border-gray-300 focus:border-blue-600 focus:ring-0 px-6 py-3 text-base"
+              />
+              <Button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="rounded-full bg-gray-200 hover:bg-gray-300 text-gray-900 px-6 py-3 font-semibold"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-center text-xs text-gray-500 mt-3">
+              O Prof Siri responde apenas conteúdos educacionais alinhados a BNCC
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

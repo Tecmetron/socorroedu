@@ -1,0 +1,308 @@
+/* 
+ * Estilos Responsivos Adicionais para SocorroEdu
+ * Complementa o Tailwind CSS com media queries específicas
+ */
+
+/* ========================================
+   MOBILE FIRST APPROACH (xs: 320px)
+   ======================================== */
+
+/* Garantir que o viewport seja correto em mobile */
+@supports (height: 100dvh) {
+  body {
+    height: 100dvh; /* Dynamic viewport height para mobile */
+  }
+}
+
+/* Melhorar legibilidade em telas pequenas */
+@media (max-width: 640px) {
+  /* Aumentar área de toque dos botões */
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  a[href] {
+    min-height: 44px; /* Recomendação Apple/Google */
+    min-width: 44px;
+  }
+
+  /* Melhorar espaçamento em mobile */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Mensagens de chat com melhor espaçamento */
+  .chat-message {
+    margin-bottom: 0.75rem;
+  }
+
+  /* Input de mensagem com melhor espaçamento */
+  input[placeholder="Digite sua pergunta..."] {
+    font-size: 16px; /* Evita zoom automático em iOS */
+  }
+
+  /* Sidebar em mobile deve ser overlay */
+  .sidebar-mobile {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    z-index: 40;
+  }
+}
+
+/* ========================================
+   TABLET (sm: 640px até md: 768px)
+   ======================================== */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* Otimizar layout para tablet */
+  .main-container {
+    display: flex;
+    flex-direction: row;
+  }
+
+  /* Sidebar pode ser colapsável */
+  .sidebar {
+    width: auto;
+    min-width: 200px;
+  }
+
+  /* Chat area com melhor proporção */
+  .chat-area {
+    flex: 1;
+  }
+
+  /* Grid de disciplinas em 2-3 colunas */
+  .subjects-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ========================================
+   DESKTOP (lg: 1024px e acima)
+   ======================================== */
+
+@media (min-width: 1024px) {
+  /* Desktop: sidebar sempre visível */
+  .sidebar {
+    width: 256px; /* w-64 */
+    position: relative;
+  }
+
+  /* Remover overlay em desktop */
+  .sidebar-overlay {
+    display: none;
+  }
+
+  /* Melhor distribuição de espaço */
+  .chat-area {
+    flex: 1;
+    max-width: calc(100% - 256px);
+  }
+
+  /* Grid de disciplinas em 4 colunas */
+  .subjects-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Mensagens com max-width confortável */
+  .chat-message {
+    max-width: 60%;
+  }
+}
+
+/* ========================================
+   LANDSCAPE vs PORTRAIT
+   ======================================== */
+
+@media (orientation: portrait) {
+  /* Reduzir altura em portrait */
+  .header {
+    padding: 0.75rem 1rem;
+  }
+
+  .input-area {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  /* Reduzir espaçamento em landscape com pouca altura */
+  .header {
+    padding: 0.5rem 1rem;
+  }
+
+  .input-area {
+    padding: 0.5rem 1rem;
+  }
+
+  .chat-area {
+    max-height: calc(100vh - 100px);
+  }
+}
+
+/* ========================================
+   ACESSIBILIDADE
+   ======================================== */
+
+/* Melhorar contraste em modo de alto contraste */
+@media (prefers-contrast: more) {
+  .chat-message {
+    border: 1px solid currentColor;
+  }
+
+  button {
+    border-width: 2px;
+  }
+}
+
+/* Respeitar preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Respeitar preferência de tema escuro */
+@media (prefers-color-scheme: dark) {
+  /* Já configurado no index.css com dark mode */
+}
+
+/* ========================================
+   IMPRESSÃO
+   ======================================== */
+
+@media print {
+  .sidebar,
+  .input-area,
+  .header {
+    display: none;
+  }
+
+  .chat-area {
+    width: 100%;
+  }
+
+  .chat-message {
+    page-break-inside: avoid;
+  }
+}
+
+/* ========================================
+   BREAKPOINTS CUSTOMIZADOS
+   ======================================== */
+
+/* Extra small devices (320px - 479px) */
+@media (max-width: 479px) {
+  .text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Small devices (480px - 639px) */
+@media (min-width: 480px) and (max-width: 639px) {
+  .sidebar {
+    width: 200px;
+  }
+}
+
+/* Medium devices (640px - 1023px) */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .sidebar {
+    width: 240px;
+  }
+}
+
+/* ========================================
+   OTIMIZAÇÕES DE PERFORMANCE
+   ======================================== */
+
+/* Usar will-change para animações suaves */
+.chat-message {
+  will-change: transform;
+}
+
+/* Otimizar scroll em mobile */
+.chat-area {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ========================================
+   FIXES ESPECÍFICOS
+   ======================================== */
+
+/* Corrigir 100vh em mobile (viewport dinâmica) */
+.full-height {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Corrigir overflow em mobile */
+body {
+  overflow: hidden;
+}
+
+/* Garantir que inputs não causem zoom em iOS */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Melhorar aparência de inputs em mobile */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 4px;
+}
+
+/* Remover highlight padrão em iOS */
+-webkit-tap-highlight-color: transparent;
+
+/* ========================================
+   VARIÁVEIS CSS RESPONSIVAS
+   ======================================== */
+
+:root {
+  /* Tamanhos responsivos */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Tamanhos de fonte responsivos */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+
+  /* Breakpoints */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* Ajustar variáveis em mobile */
+@media (max-width: 640px) {
+  :root {
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1rem;
+    --text-base: 0.95rem;
+  }
+}
