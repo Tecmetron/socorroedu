@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: socorroedu
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_GEMINI_API_KEY
+        scope: build
+        sync: false
+      - key: VITE_GEMINI_API_URL
+        value: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+        scope: build
+    buildFilter:
+      paths:
+        - src/**
+        - public/**
+        - server/**
+        - shared/**
+        - package.json
+        - pnpm-lock.yaml
+        - vite.config.ts
+        - tsconfig.json
