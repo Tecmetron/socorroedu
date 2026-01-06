@@ -200,7 +200,6 @@ export default function ChatLayout() {
               src="/socorroedu-logo.png"
               alt="SocorroEdu"
               className="h-32 w-auto"
-              style={{ height: '100px', maxWidth: '100%', objectFit: 'contain' }}
             />
             <button
               onClick={() => setSidebarOpen(false)}
