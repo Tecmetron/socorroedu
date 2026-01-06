@@ -1,22 +1,6 @@
 // Configuração do cliente Gemini API
-// A chave de API deve estar em uma variável de ambiente VITE_GEMINI_API_KEY
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = "AIzaSyAurRsjrXtAgShtZY4MVYzgyNRX4-0dyZY";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-
-// Validar se a chave de API está configurada
-if (!GEMINI_API_KEY) {
-  console.error(
-    "❌ ERRO: VITE_GEMINI_API_KEY não está definida!\n" +
-    "Por favor, crie um arquivo .env.local na raiz do projeto com:\n" +
-    "VITE_GEMINI_API_KEY=sua_chave_de_api_aqui\n\n" +
-    "Para obter uma chave:\n" +
-    "1. Acesse: https://console.cloud.google.com\n" +
-    "2. Crie um projeto ou selecione um existente\n" +
-    "3. Ative a API 'Generative Language API'\n" +
-    "4. Crie uma chave de API\n" +
-    "5. Copie a chave e adicione ao .env.local"
-  );
-}
 
 export interface GeminiMessage {
   role: "user" | "model";
@@ -59,11 +43,6 @@ class GeminiClient {
   private conversationHistory: GeminiMessage[] = [];
 
   constructor(apiKey: string, apiUrl: string) {
-    if (!apiKey) {
-      throw new Error(
-        "API Key não fornecida. Verifique se VITE_GEMINI_API_KEY está configurada."
-      );
-    }
     this.apiKey = apiKey;
     this.apiUrl = apiUrl;
   }
