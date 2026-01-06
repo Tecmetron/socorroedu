@@ -199,7 +199,7 @@ export default function ChatLayout() {
             <img
               src="/socorroedu-logo.png"
               alt="SocorroEdu"
-              className="h-20 w-auto"
+              className="h-32 w-auto"
               style={{ height: '100px', maxWidth: '100%', objectFit: 'contain' }}
             />
             <button
