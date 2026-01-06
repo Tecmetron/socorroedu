@@ -199,7 +199,7 @@ export default function ChatLayout() {
             <img
               src="/socorroedu-logo.png"
               alt="SocorroEdu"
-              className="h-32 w-auto"
+              className="h-20 w-auto"
             />
             <button
               onClick={() => setSidebarOpen(false)}
